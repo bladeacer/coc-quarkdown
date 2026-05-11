@@ -1,40 +1,52 @@
-import { commands, CompleteResult, ExtensionContext, listManager, sources, window, workspace } from 'coc.nvim';
+import { 
+  commands, CompleteResult, ExtensionContext, listManager, sources, window, workspace,
+  services, LanguageClient
+} from 'coc.nvim';
 import DemoList from './lists';
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  window.showInformationMessage('coc-quarkdown works!');
+  const serverOptions = {
+    command: 'quarkdown',
+    args: ['language-server']
+  };
+
+  const clientOptions = {
+    documentSelector: ['quarkdown', 'qd'],
+    synchronize: {
+      configurationSection: 'quarkdown'
+    }
+  };
+
+  const client = new LanguageClient(
+    'coc-quarkdown-lsp',
+    'Quarkdown Language Server',
+    serverOptions,
+    clientOptions
+  );
 
   context.subscriptions.push(
-    commands.registerCommand('coc-quarkdown.Command', async () => {
-      window.showInformationMessage('coc-quarkdown Commands works!');
+    services.registerLanguageClient(client),
+
+    commands.registerCommand("coc-quarkdown.Command", async () => {
+      window.showInformationMessage("coc-quarkdown Commands works!");
     }),
 
     listManager.registerList(new DemoList()),
 
     sources.createSource({
-      name: 'coc-quarkdown completion source', // unique id
+      name: "coc-quarkdown completion source",
       doComplete: async () => {
-        const items = await getCompletionItems();
-        return items;
-      },
+        return await getCompletionItems();
+      }
     }),
 
-    workspace.registerKeymap(
-      ['n'],
-      'quarkdown-keymap',
-      async () => {
-        window.showInformationMessage('registerKeymap');
-      },
-      { sync: false }
-    ),
-
-    workspace.registerAutocmd({
-      event: 'InsertLeave',
-      request: true,
-      callback: () => {
-        window.showInformationMessage('registerAutocmd on InsertLeave');
-      },
-    })
+    // workspace.registerAutocmd({
+    //   event: "InsertLeave",
+    //   request: true,
+    //   callback: () => {
+    //     window.showInformationMessage("registerAutocmd on InsertLeave");
+    //   }
+    // })
   );
 }
 
