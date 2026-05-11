@@ -1,6 +1,6 @@
 {
   "name": "coc-quarkdown",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "coc.nvim extension for Quarkdown LSP.",
   "author": "bladeacer <wg.nick.exe@gmail.com>",
   "license": "MIT",
@@ -30,6 +30,13 @@
     "syntax"
   ],
   "contributes": {
+    "languages": [
+      {
+        "id": "quarkdown",
+        "extensions": [".qd", ".quarkdown"],
+        "aliases": ["Quarkdown"]
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "coc-quarkdown configuration",
