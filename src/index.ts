@@ -10,9 +10,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   const stopAction = async () => {
     if (lastTerminalBufnr) {
-      const isVisible = await nvim.call('bufexists', [lastTerminalBufnr]);
-      if (isVisible) {
-        await nvim.command(`bwipeout! ${lastTerminalBufnr}`);
+      const bufnr = lastTerminalBufnr;
+      const isLoaded = await nvim.call('bufloaded', [bufnr]) as boolean;
+
+      if (isLoaded) {
+        await nvim.command(`bwipeout! ${bufnr}`);
         window.showInformationMessage('Quarkdown action stopped.');
       }
       lastTerminalBufnr = null;
@@ -47,10 +49,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
       const doc = await workspace.document;
       if (doc) {
         await stopAction();
+        const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath;
-        await nvim.command(`botright 45vnew | terminal quarkdown c ${path}`);
-        const bufnr = await nvim.call('bufnr', ['%']);
-        lastTerminalBufnr = typeof bufnr === 'number' ? bufnr : null;
+
+        await nvim.command(`botright 45vnew | setlocal noswapfile | terminal quarkdown c ${path}`);
+
+        lastTerminalBufnr = await nvim.call('bufnr', ['$']) as number;
+
+        await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Compiling Quarkdown...');
       }
     }),
@@ -59,10 +65,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
       const doc = await workspace.document;
       if (doc) {
         await stopAction();
+        const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath;
-        await nvim.command(`botright 45vnew | terminal quarkdown compile -p -w ${path}`);
-        const bufnr = await nvim.call('bufnr', ['%']);
-        lastTerminalBufnr = typeof bufnr === 'number' ? bufnr : null;
+
+        await nvim.command(`botright 45vnew | setlocal noswapfile | terminal quarkdown compile -p -w ${path}`);
+
+        lastTerminalBufnr = await nvim.call('bufnr', ['$']) as number;
+
+        await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Watching Quarkdown...');
       }
     }),
@@ -93,9 +103,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
       pattern: 'quarkdown',
       callback: async () => {
         await applyHighlights();
-        await nvim.command('nnoremap <buffer> <silent> <leader>qc :CocCommand coc-quarkdown.compile<CR>');
-        await nvim.command('nnoremap <buffer> <silent> <leader>qw :CocCommand coc-quarkdown.watch<CR>');
-        await nvim.command('nnoremap <buffer> <silent> <leader>qs :CocCommand coc-quarkdown.stop<CR>');
+        await nvim.command('nnoremap <buffer> <silent> <leader>mc :CocCommand coc-quarkdown.compile<CR>');
+        await nvim.command('nnoremap <buffer> <silent> <leader>mw :CocCommand coc-quarkdown.watch<CR>');
+        await nvim.command('nnoremap <buffer> <silent> <leader>ms :CocCommand coc-quarkdown.stop<CR>');
       }
     })
   );

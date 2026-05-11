@@ -23,9 +23,9 @@ This extension registers the following commands:
 
 | Command | Description | Default Keymap (Local) |
 |---------|-------------|-------------------------|
-| `coc-quarkdown.compile` | Compiles the current file | `<leader>qc` |
-| `coc-quarkdown.watch` | Starts compiler in watch mode | `<leader>qw` |
-| `coc-quarkdown.stop` | Stops any active action (compile/watch) | `<leader>qs` |
+| `coc-quarkdown.compile` | Compiles the current file | `<leader>mc` |
+| `coc-quarkdown.watch` | Starts compiler in watch mode | `<leader>mw` |
+| `coc-quarkdown.stop` | Stops any active action (compile/watch) | `<leader>ms` |
 
 > **Note**: Keymaps are buffer-local and only activate for `quarkdown` filetypes.
 
@@ -61,6 +61,10 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 ```
+
+### Planned Features
+
+* Pass custom flags (configuration + runtime override) when running compile/watch.
 
 ## License
 
