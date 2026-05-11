@@ -103,7 +103,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const clientOptions = {
     documentSelector: ['quarkdown', 'qd'],
     synchronize: { configurationSection: 'quarkdown' },
-    workspaceFolder: workspace.workspaceFolders ? workspace.workspaceFolders[0] : undefined
+    rootPath: workspace.root || process.cwd()
   };
 
 if (config.get<boolean>('enabled', true)) {
