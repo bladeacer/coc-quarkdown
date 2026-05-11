@@ -14,8 +14,24 @@
 1. Ensure the `quarkdown` CLI is installed and in your `$PATH`.
 2. Ensure you have [coc.nvim](https://github.com/neoclide/coc.nvim) installed.
 Follow their setup instructions.
-3. Inside Vim/Neovim, run:
-   `:CocInstall https://github.com/bladeacer/coc-quarkdown`
+3. Using your favourite package manager
+
+For [vim-plug](https://github.com/junegunn/vim-plug).
+
+```vim
+Plug 'bladeacer/coc-quarkdown', {'do': 'npm install && npm run build'}
+```
+
+For [lazy.vim](https://github.com/folke/lazy.nvim).
+
+```lua
+{
+  'bladeacer/coc-quarkdown',
+  build = 'npm install && npm run build',
+  ft = { "quarkdown", "qd" }
+}
+```
+
 
 ## Commands and Keymaps
 
@@ -40,9 +56,6 @@ Adapt into to your `.vimrc` or its equivalent.
 ```vim
 " Example: Change the compilation shortcut to F5
 autocmd FileType quarkdown nnoremap <buffer> <F5> :CocCommand coc-quarkdown.compile<CR>
-
-" Example: Map the watch/preview mode to <leader>p
-autocmd FileType quarkdown nnoremap <buffer> <leader>p :CocCommand coc-quarkdown.watch<CR>
 ```
 
 ### Nvim
@@ -55,9 +68,6 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function()
     -- Example: Compile on F5
     vim.keymap.set("n", "<F5>", ":CocCommand coc-quarkdown.compile<CR>", { buffer = true, silent = true })
-    
-    -- Example: Watch/Preview on <leader>p
-    vim.keymap.set("n", "<leader>p", ":CocCommand coc-quarkdown.watch<CR>", { buffer = true, silent = true })
   end,
 })
 ```
