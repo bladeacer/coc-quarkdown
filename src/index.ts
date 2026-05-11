@@ -1,11 +1,23 @@
 import { 
   commands, CompleteResult, ExtensionContext, listManager, sources, window, workspace, 
-  services, LanguageClient 
+  services, LanguageClient, Uri
 } from 'coc.nvim';
 import DemoList from './lists';
 
 export async function activate(context: ExtensionContext): Promise<void> {
   const { nvim } = workspace;
+  let lastTerminalBufnr: number | null = null;
+
+  const stopAction = async () => {
+    if (lastTerminalBufnr) {
+      const isVisible = await nvim.call('bufexists', [lastTerminalBufnr]);
+      if (isVisible) {
+        await nvim.command(`bwipeout! ${lastTerminalBufnr}`);
+        window.showInformationMessage('Quarkdown action stopped.');
+      }
+      lastTerminalBufnr = null;
+    }
+  };
 
   const config = workspace.getConfiguration('semanticTokens');
   const filetypes = config.get<string[]>('filetypes', []);
@@ -28,6 +40,36 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
   };
 
+  context.subscriptions.push(
+    commands.registerCommand("coc-quarkdown.stop", stopAction),
+
+    commands.registerCommand("coc-quarkdown.compile", async () => {
+      const doc = await workspace.document;
+      if (doc) {
+        await stopAction();
+        const path = Uri.parse(doc.uri).fsPath;
+        await nvim.command(`botright 45vnew | terminal quarkdown c ${path}`);
+        const bufnr = await nvim.call('bufnr', ['%']);
+        lastTerminalBufnr = typeof bufnr === 'number' ? bufnr : null;
+        window.showInformationMessage('Compiling Quarkdown...');
+      }
+    }),
+
+    commands.registerCommand("coc-quarkdown.watch", async () => {
+      const doc = await workspace.document;
+      if (doc) {
+        await stopAction();
+        const path = Uri.parse(doc.uri).fsPath;
+        await nvim.command(`botright 45vnew | terminal quarkdown compile -p -w ${path}`);
+        const bufnr = await nvim.call('bufnr', ['%']);
+        lastTerminalBufnr = typeof bufnr === 'number' ? bufnr : null;
+        window.showInformationMessage('Watching Quarkdown...');
+      }
+    }),
+
+    listManager.registerList(new DemoList())
+  );
+
   const serverOptions = { command: 'quarkdown', args: ['language-server'] };
   const clientOptions = {
     documentSelector: ['quarkdown', 'qd'],
@@ -37,31 +79,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   context.subscriptions.push(
     services.registerLanguageClient(client),
-
-    // sources.createSource({
-    //   name: "coc-quarkdown completion source",
-    //   doComplete: async () => {
-    //     return await getCompletionItems();
-    //   }
-    // }),
-
-    commands.registerCommand("coc-quarkdown.compile", async () => {
-      const doc = await workspace.document;
-      if (doc) {
-        const path = doc.uri.replace('file://', '');
-        await nvim.command(`split | terminal quarkdown c ${path}`);
-      }
-    }),
-
-    commands.registerCommand("coc-quarkdown.watch", async () => {
-      const doc = await workspace.document;
-      if (doc) {
-        const path = doc.uri.replace('file://', '');
-        await nvim.command(`split | terminal quarkdown -p -w ${path}`);
-      }
-    }),
-
-    listManager.registerList(new DemoList()),
 
     workspace.registerAutocmd({
       event: 'BufNewFile,BufRead',
@@ -76,9 +93,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
       pattern: 'quarkdown',
       callback: async () => {
         await applyHighlights();
-        // Cross-compatible buffer-local keybinds
         await nvim.command('nnoremap <buffer> <silent> <leader>qc :CocCommand coc-quarkdown.compile<CR>');
         await nvim.command('nnoremap <buffer> <silent> <leader>qw :CocCommand coc-quarkdown.watch<CR>');
+        await nvim.command('nnoremap <buffer> <silent> <leader>qs :CocCommand coc-quarkdown.stop<CR>');
       }
     })
   );
