@@ -51,6 +51,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     commands.registerCommand("coc-quarkdown.compile", async () => {
       const doc = await workspace.document;
+      if (!doc || !doc.uri.startsWith('file')) {
+        window.showErrorMessage("Current buffer is not a saved file.");
+        return;
+      }
       if (doc) {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
@@ -73,6 +77,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     commands.registerCommand("coc-quarkdown.watch", async () => {
       const doc = await workspace.document;
+      if (!doc || !doc.uri.startsWith('file')) {
+        window.showErrorMessage("Current buffer is not a saved file.");
+        return;
+      }
       if (doc) {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
@@ -94,13 +102,16 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const serverOptions = { command: 'quarkdown', args: ['language-server'] };
   const clientOptions = {
     documentSelector: ['quarkdown', 'qd'],
-    synchronize: { configurationSection: 'quarkdown' }
+    synchronize: { configurationSection: 'quarkdown' },
+    workspaceFolder: workspace.workspaceFolders ? workspace.workspaceFolders[0] : undefined
   };
-  const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
+
+if (config.get<boolean>('enabled', true)) {
+    const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
+    context.subscriptions.push(services.registerLanguageClient(client));
+  }
 
   context.subscriptions.push(
-    services.registerLanguageClient(client),
-
     workspace.registerAutocmd({
       event: 'BufNewFile,BufRead',
       pattern: '*.qd,*.quarkdown',
