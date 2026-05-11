@@ -1,6 +1,6 @@
 {
   "name": "coc-quarkdown",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "coc.nvim extension for Quarkdown LSP.",
   "author": "bladeacer <wg.nick.exe@gmail.com>",
   "license": "MIT",
