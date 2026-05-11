@@ -1,6 +1,6 @@
 {
   "name": "coc-quarkdown",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "coc.nvim extension for Quarkdown LSP.",
   "author": "bladeacer <wg.nick.exe@gmail.com>",
   "license": "MIT",
@@ -22,7 +22,12 @@
     "typescript": "^5.9.3"
   },
   "activationEvents": [
-    "*"
+    "onFileType:quarkdown"
+  ],
+  "files": [
+    "lib",
+    "ftdetect",
+    "syntax"
   ],
   "contributes": {
     "configuration": {
@@ -38,8 +43,16 @@
     },
     "commands": [
       {
-        "command": "coc-quarkdown.Command",
-        "title": "coc-quarkdown command title"
+        "command": "coc-quarkdown.compile",
+        "title": "Compile Quarkdown file"
+      },
+      {
+        "command": "coc-quarkdown.watch",
+        "title": "Watch Quarkdown file"
+      },
+      {
+        "command": "coc-quarkdown.stop",
+        "title": "Stop Quarkdown action"
       }
     ]
   }

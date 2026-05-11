@@ -49,8 +49,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(
     commands.registerCommand("coc-quarkdown.stop", stopAction),
 
-    commands.registerCommand("coc-quarkdown.stop", stopAction),
-
     commands.registerCommand("coc-quarkdown.compile", async () => {
       const doc = await workspace.document;
       if (doc) {
