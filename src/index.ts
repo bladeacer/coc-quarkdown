@@ -11,10 +11,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const stopAction = async () => {
     if (lastTerminalBufnr) {
       const bufnr = lastTerminalBufnr;
-      const isLoaded = await nvim.call('bufloaded', [bufnr]) as boolean;
+      const exists = await nvim.call('bufexists', [bufnr]) as boolean;
 
-      if (isLoaded) {
-        await nvim.command(`bwipeout! ${bufnr}`);
+      if (exists) {
+        const winid = await nvim.call('bufwinid', [bufnr]) as number;
+        if (winid !== -1) {
+          await nvim.call('win_execute', [winid, 'close!']);
+        }
+        await nvim.command(`silent! bwipeout! ${bufnr}`);
         window.showInformationMessage('Quarkdown action stopped.');
       }
       lastTerminalBufnr = null;
@@ -45,6 +49,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(
     commands.registerCommand("coc-quarkdown.stop", stopAction),
 
+    commands.registerCommand("coc-quarkdown.stop", stopAction),
+
     commands.registerCommand("coc-quarkdown.compile", async () => {
       const doc = await workspace.document;
       if (doc) {
@@ -52,9 +58,15 @@ export async function activate(context: ExtensionContext): Promise<void> {
         const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath;
 
-        await nvim.command(`botright 45vnew | setlocal noswapfile | terminal quarkdown c ${path}`);
+        // 1. Create a vertical new window (vnew) which starts empty.
+        // 2. Immediately execute terminal inside it.
+        // 3. We use '++curwin' to force the terminal to stay in the exact window we just made.
+        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile ${path}`);
+        
+        lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
 
-        lastTerminalBufnr = await nvim.call('bufnr', ['$']) as number;
+        // Ensure the terminal buffer itself is not listed in :ls
+        await nvim.command('setlocal nobuflisted');
 
         await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Compiling Quarkdown...');
@@ -68,9 +80,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
         const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath;
 
-        await nvim.command(`botright 45vnew | setlocal noswapfile | terminal quarkdown compile -p -w ${path}`);
-
-        lastTerminalBufnr = await nvim.call('bufnr', ['$']) as number;
+        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile -p -w ${path}`);
+        
+        lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
+        await nvim.command('setlocal nobuflisted');
 
         await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Watching Quarkdown...');
