@@ -25,26 +25,38 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
   };
 
+  const applyHighlights = async () => {
+    const highlights = [
+      'hi default link CocSemFunction Function',
+      'hi default link CocSemParameter Special', 
+      'hi default link CocSemVariable Identifier',
+      'hi default link CocSemType Type',
+      'hi default link CocSemKeyword Keyword',
+    ];
+    for (const line of highlights) await nvim.command(line);
+  };
+
+  const setupDefaultKeymaps = async () => {
+    const maps = [
+      { key: '<leader>mc', cmd: 'coc-quarkdown.compile' },
+      { key: '<leader>mw', cmd: 'coc-quarkdown.watch' },
+      { key: '<leader>ms', cmd: 'coc-quarkdown.stop' },
+    ];
+
+    for (const map of maps) {
+      const hasMapping = await nvim.call('maparg', [map.key, 'n']) as string;
+      if (!hasMapping) {
+        await nvim.command(`nnoremap <buffer> <silent> ${map.key} :CocCommand ${map.cmd}<CR>`);
+      }
+    }
+  };
+
   const config = workspace.getConfiguration('semanticTokens');
   const filetypes = config.get<string[]>('filetypes', []);
   if (!filetypes.includes('quarkdown')) {
     filetypes.push('quarkdown');
     config.update('filetypes', filetypes, true);
   }
-
-  const highlights = [
-    'hi default link CocSemFunction Function',
-    'hi default link CocSemParameter Special', 
-    'hi default link CocSemVariable Identifier',
-    'hi default link CocSemType Type',
-    'hi default link CocSemKeyword Keyword',
-  ];
-
-  const applyHighlights = async () => {
-    for (const line of highlights) {
-      await nvim.command(line);
-    }
-  };
 
   context.subscriptions.push(
     commands.registerCommand("coc-quarkdown.stop", stopAction),
@@ -58,18 +70,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
       if (doc) {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
-        const path = Uri.parse(doc.uri).fsPath;
-
-        // 1. Create a vertical new window (vnew) which starts empty.
-        // 2. Immediately execute terminal inside it.
-        // 3. We use '++curwin' to force the terminal to stay in the exact window we just made.
+        const path = Uri.parse(doc.uri).fsPath.replace(/ /g, '\\ ');
         await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile ${path}`);
-        
         lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
-
-        // Ensure the terminal buffer itself is not listed in :ls
         await nvim.command('setlocal nobuflisted');
-
         await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Compiling Quarkdown...');
       }
@@ -84,13 +88,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
       if (doc) {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
-        const path = Uri.parse(doc.uri).fsPath;
-
+        const path = Uri.parse(doc.uri).fsPath.replace(/ /g, '\\ ');
         await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile -p -w ${path}`);
-        
         lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
         await nvim.command('setlocal nobuflisted');
-
         await nvim.call('win_gotoid', [currentWinId]);
         window.showInformationMessage('Watching Quarkdown...');
       }
@@ -106,7 +107,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     rootPath: workspace.root || process.cwd()
   };
 
-if (config.get<boolean>('enabled', true)) {
+  if (config.get<boolean>('enabled', true)) {
     const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
     context.subscriptions.push(services.registerLanguageClient(client));
   }
@@ -125,12 +126,16 @@ if (config.get<boolean>('enabled', true)) {
       pattern: 'quarkdown',
       callback: async () => {
         await applyHighlights();
-        await nvim.command('nnoremap <buffer> <silent> <leader>mc :CocCommand coc-quarkdown.compile<CR>');
-        await nvim.command('nnoremap <buffer> <silent> <leader>mw :CocCommand coc-quarkdown.watch<CR>');
-        await nvim.command('nnoremap <buffer> <silent> <leader>ms :CocCommand coc-quarkdown.stop<CR>');
+        await setupDefaultKeymaps();
       }
     })
   );
+
+  const currentDoc = await workspace.document;
+  if (currentDoc && (currentDoc.filetype === 'quarkdown' || currentDoc.filetype === 'qd')) {
+    await applyHighlights();
+    await setupDefaultKeymaps();
+  }
 }
 
 // async function getCompletionItems(): Promise<CompleteResult> {

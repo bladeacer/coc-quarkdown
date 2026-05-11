@@ -14,7 +14,15 @@
 1. Ensure the `quarkdown` CLI is installed and in your `$PATH`.
 2. Ensure you have [coc.nvim](https://github.com/neoclide/coc.nvim) installed.
 Follow their setup instructions.
-3. Using your favourite package manager
+3. Either of these installation methods
+
+Using CocInstall directly.
+
+```vim
+CocInstall https://github.com/bladeacer/coc-quarkdown
+```
+
+Using your favourite package manager
 
 For [vim-plug](https://github.com/junegunn/vim-plug).
 
@@ -74,6 +82,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
 ### Planned Features
 
+* Fix passing default keybinds in index.js
 * Pass custom flags (configuration + runtime override) when running compile/watch.
 
 ## License
