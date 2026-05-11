@@ -36,6 +36,33 @@ export async function activate(context: ExtensionContext): Promise<void> {
     for (const line of highlights) await nvim.command(line);
   };
 
+  const applySyntax = async () => {
+    const syntaxScript = `
+    if exists("b:current_syntax") && b:current_syntax == "quarkdown"
+      finish
+    endif
+
+    syn match qdComment /\\/\\/.*/
+    syn region qdString start=/"/ skip=/\\"/ end=/"/
+      syn match qdNumber /\\<\\d\\+\\>/
+      syn match qdOperator /[:=+\\-*\\/]/
+      syn keyword qdBoolean true false
+
+    hi def link qdComment Comment
+    hi def link qdString String
+    hi def link qdNumber Constant
+    hi def link qdOperator Statement
+    hi def link qdBoolean Boolean
+
+    let b:current_syntax = "quarkdown"
+    `;
+
+    for (const line of syntaxScript.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed) await nvim.command(trimmed);
+    }
+  };
+
   const setupDefaultKeymaps = async () => {
     const maps = [
       { key: '<leader>mc', cmd: 'coc-quarkdown.compile' },
@@ -44,19 +71,24 @@ export async function activate(context: ExtensionContext): Promise<void> {
     ];
 
     for (const map of maps) {
-      const hasMapping = await nvim.call('maparg', [map.key, 'n']) as string;
-      if (!hasMapping) {
-        await nvim.command(`nnoremap <buffer> <silent> ${map.key} :CocCommand ${map.cmd}<CR>`);
-      }
+      await nvim.command(`silent! nnoremap <buffer> <silent> ${map.key} :CocCommand ${map.cmd}<CR>`);
     }
   };
 
-  const config = workspace.getConfiguration('semanticTokens');
-  const filetypes = config.get<string[]>('filetypes', []);
+  const initializeBuffer = async () => {
+    await applySyntax();
+    await applyHighlights();
+    await setupDefaultKeymaps(); 
+  };
+
+  const semanticConfig = workspace.getConfiguration('semanticTokens');
+  const filetypes = semanticConfig.get<string[]>('filetypes', []);
   if (!filetypes.includes('quarkdown')) {
     filetypes.push('quarkdown');
-    config.update('filetypes', filetypes, true);
+    semanticConfig.update('filetypes', filetypes, true);
   }
+
+  const extConfig = workspace.getConfiguration('coc-quarkdown');
 
   context.subscriptions.push(
     commands.registerCommand("coc-quarkdown.stop", stopAction),
@@ -107,7 +139,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     rootPath: workspace.root || process.cwd()
   };
 
-  if (config.get<boolean>('enabled', true)) {
+  if (extConfig.get<boolean>('enabled', true)) {
     const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
     context.subscriptions.push(services.registerLanguageClient(client));
   }
@@ -115,7 +147,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(
     workspace.registerAutocmd({
       event: 'BufNewFile,BufRead',
-      pattern: '*.qd,*.quarkdown',
+      pattern: ['*.qd', '*.quarkdown'],
       callback: async () => {
         await nvim.command('setf quarkdown');
       }
@@ -123,18 +155,16 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     workspace.registerAutocmd({
       event: 'FileType',
-      pattern: 'quarkdown',
+      pattern: ['*.qd', '*.quarkdown'],
       callback: async () => {
-        await applyHighlights();
-        await setupDefaultKeymaps();
+        await initializeBuffer();
       }
     })
   );
 
-  const currentDoc = await workspace.document;
-  if (currentDoc && (currentDoc.filetype === 'quarkdown' || currentDoc.filetype === 'qd')) {
-    await applyHighlights();
-    await setupDefaultKeymaps();
+  const doc = await workspace.document;
+  if (doc && (doc.filetype === 'quarkdown' || doc.filetype === 'qd')) {
+    await initializeBuffer();
   }
 }
 
