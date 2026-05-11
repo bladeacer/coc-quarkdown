@@ -1,0 +1,46 @@
+{
+  "name": "coc-quarkdown",
+  "version": "0.0.0-development",
+  "description": "coc.nvim LSP for Quarkdown.",
+  "author": "bladeacer <wg.nick.exe@gmail.com>",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "keywords": [
+    "coc.nvim"
+  ],
+  "engines": {
+    "coc": "^0.0.82"
+  },
+  "scripts": {
+    "watch": "node esbuild.mjs --watch",
+    "build": "node esbuild.mjs",
+    "prepare": "node esbuild.mjs"
+  },
+  "devDependencies": {
+    "coc.nvim": "0.0.83-next.24",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.9.3"
+  },
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "coc-quarkdown configuration",
+      "properties": {
+        "coc-quarkdown.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable coc-quarkdown extension"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "coc-quarkdown.Command",
+        "title": "coc-quarkdown command title"
+      }
+    ]
+  }
+}
