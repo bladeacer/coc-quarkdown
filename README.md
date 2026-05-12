@@ -19,7 +19,7 @@ Follow their setup instructions.
 Using CocInstall directly.
 
 ```vim
-CocInstall https://github.com/bladeacer/coc-quarkdown
+:CocInstall https://github.com/bladeacer/coc-quarkdown
 ```
 
 Using your favourite package manager
@@ -27,8 +27,15 @@ Using your favourite package manager
 For [vim-plug](https://github.com/junegunn/vim-plug).
 
 ```vim
-Plug 'bladeacer/coc-quarkdown', {'do': 'npm install && npm run build'}
+call plug#begin()
+    Plug 'bladeacer/coc-quarkdown', {'do': 'npm install && npm run build'}
+call plug#end()
 ```
+
+Installation might sometimes requires a few tries to get through,
+try setting, restarting and calling `:PlugInstall`.
+
+There should be `stdout` output when building the extension.
 
 For [lazy.vim](https://github.com/folke/lazy.nvim).
 
@@ -40,6 +47,7 @@ For [lazy.vim](https://github.com/folke/lazy.nvim).
 }
 ```
 
+Note: The associated keybinds and LSP takes *a while* to load after the first installation.
 
 ## Commands and Keymaps
 
@@ -82,7 +90,6 @@ vim.api.nvim_create_autocmd("FileType", {
 
 ### Planned Features
 
-* Fix passing default keybinds in index.js
 * Pass custom flags (configuration + runtime override) when running compile/watch.
 
 ## License
