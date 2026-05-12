@@ -93,7 +93,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath.replace(/ /g, '\\ ');
-        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile ${path}`);
+        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown c ${path}`);
         lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
         await nvim.command('setlocal nobuflisted');
         await nvim.call('win_gotoid', [currentWinId]);
@@ -111,7 +111,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         await stopAction();
         const currentWinId = await nvim.call('win_getid') as number;
         const path = Uri.parse(doc.uri).fsPath.replace(/ /g, '\\ ');
-        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown compile -p -w ${path}`);
+        await nvim.command(`botright 45vnew | terminal ++curwin quarkdown c ${path} -p -w`);
         lastTerminalBufnr = await nvim.call('bufnr', ['%']) as number;
         await nvim.command('setlocal nobuflisted');
         await nvim.call('win_gotoid', [currentWinId]);
