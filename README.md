@@ -1,28 +1,42 @@
 # coc-quarkdown
 
+![Preview screenshot](preview.webp)
+
+> Example from Quarkdown's collection of mock documents
+
 [Quarkdown](https://github.com/iamgio/quarkdown) support for [coc.nvim](https://github.com/neoclide/coc.nvim).
 
 ## Features
 
-* LSP Support: Powered by `quarkdown-lsp` (official CLI implementation)
+* LSP Support: Powered by `quarkdown-lsp` (via Quarkdown's CLI)
 * Completions: Smart completion for keywords and functions.
 * Semantic Highlighting: Colouring for function calls, types, and parameters.
 * Compilation: Built-in commands to compile and watch Quarkdown files.
 
-## Install
+## Installation
 
 1. Ensure the `quarkdown` CLI is installed and in your `$PATH`.
 2. Ensure you have [coc.nvim](https://github.com/neoclide/coc.nvim) installed.
 Follow their setup instructions.
-3. Either of these installation methods
+3. Either of the installation methods listed below.
 
-Using CocInstall directly.
+> Note: The associated keybinds and LSP takes *a while* to load after the first installation.
+
+### CocInstall
+
+Using `:CocInstall` directly.
 
 ```vim
 :CocInstall https://github.com/bladeacer/coc-quarkdown
 ```
 
-Using your favourite package manager
+___
+
+### Package managers
+
+Using your favourite vim/nvim package manager.
+
+#### vim-plug
 
 For [vim-plug](https://github.com/junegunn/vim-plug).
 
@@ -32,10 +46,12 @@ call plug#begin()
 call plug#end()
 ```
 
-Installation might sometimes requires a few tries to get through,
-try setting, restarting and calling `:PlugInstall`.
+Installation might sometimes requires a few tries to get through.
+Try saving the configuration file, restarting Vim and calling `:PlugInstall`.
 
 There should be `stdout` output when building the extension.
+
+#### lazy.nvim
 
 For [lazy.vim](https://github.com/folke/lazy.nvim).
 
@@ -46,8 +62,6 @@ For [lazy.vim](https://github.com/folke/lazy.nvim).
   ft = { "quarkdown", "qd" }
 }
 ```
-
-Note: The associated keybinds and LSP takes *a while* to load after the first installation.
 
 ## Commands and Keymaps
 
@@ -100,5 +114,6 @@ MIT.
 
 ## Credits
 
-* [Quarkdown](https://github.com/iamgio/quarkdown) for the language and LSP implementation.
+* [Quarkdown](https://github.com/iamgio/quarkdown) for the LSP implementation
+and awesome software :D
 * Built with [create-coc-extension](https://github.com/fannheyward/create-coc-extension).
