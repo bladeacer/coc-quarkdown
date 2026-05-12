@@ -37,42 +37,34 @@ export async function activate(context: ExtensionContext): Promise<void> {
   };
 
   const applySyntax = async () => {
-    const syntaxScript = `
-    if exists("b:current_syntax") && b:current_syntax == "quarkdown"
-      finish
-    endif
+    const hasSyntax = await nvim.getVar('current_syntax').catch(() => null);
+    if (hasSyntax === 'quarkdown') {
+      return;
+    }
 
-    syn match qdComment /\\/\\/.*/
-    syn region qdString start=/"/ skip=/\\"/ end=/"/
-      syn match qdNumber /\\<\\d\\+\\>/
-      syn match qdOperator /[:=+\\-*\\/]/
-      syn keyword qdBoolean true false
+    const commands = [
+      'syn match qdComment /\\/\\/.*/',
+'syn region qdString start=/"/ skip=/\\"/ end=/"/',
+'syn match qdNumber /\\<\\d\\+\\>/',
+'syn match qdOperator /[:=+\\-*\\/]/',
+'syn keyword qdBoolean true false',
+'hi def link qdComment Comment',
+'hi def link qdString String',
+'hi def link qdNumber Constant',
+'hi def link qdOperator Statement',
+'hi def link qdBoolean Boolean',
+'let b:current_syntax = "quarkdown"'
+    ];
 
-    hi def link qdComment Comment
-    hi def link qdString String
-    hi def link qdNumber Constant
-    hi def link qdOperator Statement
-    hi def link qdBoolean Boolean
-
-    let b:current_syntax = "quarkdown"
-    `;
-
-    for (const line of syntaxScript.split('\n')) {
-      const trimmed = line.trim();
-      if (trimmed) await nvim.command(trimmed);
+    for (const cmd of commands) {
+      await nvim.command(cmd);
     }
   };
 
   const setupDefaultKeymaps = async () => {
-    const maps = [
-      { key: '<leader>mc', cmd: 'coc-quarkdown.compile' },
-      { key: '<leader>mw', cmd: 'coc-quarkdown.watch' },
-      { key: '<leader>ms', cmd: 'coc-quarkdown.stop' },
-    ];
-
-    for (const map of maps) {
-      await nvim.command(`silent! nnoremap <buffer> <silent> ${map.key} :CocCommand ${map.cmd}<CR>`);
-    }
+    await nvim.command('nnoremap <buffer> <silent> <leader>mc :CocCommand coc-quarkdown.compile<CR>');
+    await nvim.command('nnoremap <buffer> <silent> <leader>mw :CocCommand coc-quarkdown.watch<CR>');
+    await nvim.command('nnoremap <buffer> <silent> <leader>ms :CocCommand coc-quarkdown.stop<CR>');
   };
 
   const initializeBuffer = async () => {
@@ -87,8 +79,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
     filetypes.push('quarkdown');
     semanticConfig.update('filetypes', filetypes, true);
   }
-
-  const extConfig = workspace.getConfiguration('coc-quarkdown');
 
   context.subscriptions.push(
     commands.registerCommand("coc-quarkdown.stop", stopAction),
@@ -129,22 +119,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
       }
     }),
 
-    listManager.registerList(new DemoList())
-  );
-
-  const serverOptions = { command: 'quarkdown', args: ['language-server'] };
-  const clientOptions = {
-    documentSelector: ['quarkdown', 'qd'],
-    synchronize: { configurationSection: 'quarkdown' },
-    rootPath: workspace.root || process.cwd()
-  };
-
-  if (extConfig.get<boolean>('enabled', true)) {
-    const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
-    context.subscriptions.push(services.registerLanguageClient(client));
-  }
-
-  context.subscriptions.push(
     workspace.registerAutocmd({
       event: 'BufNewFile,BufRead',
       pattern: ['*.qd', '*.quarkdown'],
@@ -155,12 +129,27 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     workspace.registerAutocmd({
       event: 'FileType',
-      pattern: ['*.qd', '*.quarkdown'],
+      pattern: 'quarkdown',
       callback: async () => {
         await initializeBuffer();
       }
-    })
+    }),
+
+    listManager.registerList(new DemoList())
   );
+
+  const serverOptions = { command: 'quarkdown', args: ['language-server'] };
+  const clientOptions = {
+    documentSelector: ['quarkdown', 'qd'],
+    synchronize: { configurationSection: 'quarkdown' },
+    rootPath: workspace.root || process.cwd()
+  };
+
+  const extConfig = workspace.getConfiguration('coc-quarkdown');
+  if (extConfig.get<boolean>('enabled', true)) {
+    const client = new LanguageClient('coc-quarkdown-lsp', 'Quarkdown LSP', serverOptions, clientOptions);
+    context.subscriptions.push(services.registerLanguageClient(client));
+  }
 
   const doc = await workspace.document;
   if (doc && (doc.filetype === 'quarkdown' || doc.filetype === 'qd')) {
